@@ -81,20 +81,20 @@ class GameController extends GetxController {
   }
 
   /// ابدأ لعبة جديدة
-  void startGame(GameVariant variant, PieceColor playerColor) {
-    stateRx.value = GameState.initial(variant, playerColor);
+void startGame(GameVariant variant, PieceColor playerColor) {
+    // تأكد أن initial تضع الدور دائماً للأبيض
+    stateRx.value = GameState.initial(variant, playerColor).copyWith(
+      blackCaptured: 0,
+      whiteCaptured: 0,
+    );
     
-    // ═══════════════════════════════════════════════════════
-    // إضافة: إعادة تعيين المتغيرات
-    // ═══════════════════════════════════════════════════════
     _lastAppliedMove = null;
     _lastMoveWasAi = false;
     
-    // ═══════════════════════════════════════════════════════
-    // إضافة: إذا اختار اللاعب الأسود، AI (الأبيض) يبدأ أولاً
-    // ═══════════════════════════════════════════════════════
+    // إذا كان اللاعب أسود، يعني الأبيض (AI) هو من يبدأ
     if (playerColor == PieceColor.black) {
-      Future.delayed(const Duration(milliseconds: 100), () {
+      // ننتظر قليلاً للتأكد من بناء الواجهة ثم نطلب من الـ AI التحرك
+      Future.delayed(const Duration(milliseconds: 500), () {
         _triggerAi(state.board);
       });
     }
@@ -159,19 +159,28 @@ class GameController extends GetxController {
     }
   }
 
-  void _applyPlayerMove() {
-    // نفّذ الحركة على اللوحة المنطقية
+void _applyPlayerMove() {
     final lastMove = _lastAppliedMove;
     if (lastMove == null) return;
 
     final newBoard = _applyMove(state.board, lastMove);
     final captured = lastMove.captureCount;
 
+    // المنطق الصحيح: إذا أكل اللاعب قطعاً، نزيد عداد اللون الذي "أُكل"
+    // الخصم هو عكس لون اللاعب
+    final opponentColor = _opponent(state.playerColor);
+
     stateRx.value = state.copyWith(
       board: newBoard,
       currentTurn: _opponent(state.currentTurn),
       phase: GamePhase.aiThinking,
-      blackCaptured: state.blackCaptured + captured,
+      // إذا كان الخصم أسود نزيد blackCaptured، وإذا كان أبيض نزيد whiteCaptured
+      blackCaptured: opponentColor == PieceColor.black 
+          ? state.blackCaptured + captured 
+          : state.blackCaptured,
+      whiteCaptured: opponentColor == PieceColor.white 
+          ? state.whiteCaptured + captured 
+          : state.whiteCaptured,
     );
 
     _checkGameOver(newBoard);
@@ -185,11 +194,20 @@ class GameController extends GetxController {
     final newBoard = _applyMove(state.board, lastMove);
     final captured = lastMove.captureCount;
 
+    // هنا الـ AI أكل قطع اللاعب
+    final playerColor = state.playerColor;
+
     stateRx.value = state.copyWith(
       board: newBoard,
       currentTurn: state.playerColor,
       phase: GamePhase.playing,
-      whiteCaptured: state.whiteCaptured + captured,
+      // نزيد عداد لون اللاعب لأنه هو من خسر قطعاً
+      blackCaptured: playerColor == PieceColor.black 
+          ? state.blackCaptured + captured 
+          : state.blackCaptured,
+      whiteCaptured: playerColor == PieceColor.white 
+          ? state.whiteCaptured + captured 
+          : state.whiteCaptured,
     );
 
     _checkGameOver(newBoard);

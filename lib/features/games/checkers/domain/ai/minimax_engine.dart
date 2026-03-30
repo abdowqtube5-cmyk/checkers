@@ -22,6 +22,7 @@ class MinimaxEngine {
   final ApplyMoveFunction _applyMove;
   final EvaluatorLogic _evaluator;
   final _random = Random();
+  
 
   MinimaxEngine({
     CalculateAvailableMoves? moveCalc,
@@ -53,6 +54,7 @@ class MinimaxEngine {
           (score == bestScore && _random.nextBool())) {
         bestScore = score;
         best = move;
+        
       }
     }
 
@@ -71,7 +73,7 @@ class MinimaxEngine {
 
     // حالة نهائية: لا حركات أو وصلنا للعمق الأقصى
     if (depth == 0 || moves.isEmpty) {
-      return _evaluator(board);
+      return _evaluator(board, PieceColor.aiColor);
     }
 
     if (isMaximizing) {

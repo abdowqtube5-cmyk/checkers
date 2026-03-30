@@ -1,7 +1,7 @@
 // lib/features/games/checkers/domain/entities/piece_model.dart
 
 /// لون القطعة
-enum PieceColor { white, black }
+enum PieceColor { white, black, aiColor }
 
 /// متغير اللعبة
 enum GameVariant { german, turkish }

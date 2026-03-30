@@ -9,8 +9,8 @@ import 'package:checkers/features/games/checkers/domain/entities/board_state.dar
 import 'package:checkers/features/games/checkers/domain/entities/piece_model.dart';
 
 class EvaluatorLogic {
-  /// قيّم اللوحة من منظور الأسود (AI)
-  int call(BoardState board) {
+  /// قيّم اللوحة من منظور الذكاء الاصطناعي بناءً على لونه
+  int call(BoardState board, PieceColor aiColor) {
     var score = 0;
 
     for (var r = 0; r < board.size; r++) {
@@ -22,15 +22,12 @@ class EvaluatorLogic {
             ? GameConstants.kingPieceValue
             : GameConstants.regularPieceValue;
 
-        // مكافأة الموضع: مركز اللوحة أقوى
         final centerBonus = _centerBonus(r, c, board.size);
-
-        // مكافأة التقدم نحو الترقية
         final advanceBonus = _advanceBonus(piece, r, board.size);
-
         final pieceScore = baseValue + centerBonus + advanceBonus;
 
-        if (piece.color == PieceColor.black) {
+        // التعديل هنا: إذا كانت القطعة تابعة للكمبيوتر نزيد النقاط، وإلا ننقصها
+        if (piece.color == aiColor) {
           score += pieceScore;
         } else {
           score -= pieceScore;
