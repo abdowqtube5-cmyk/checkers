@@ -54,4 +54,7 @@ class PieceModel {
 
   @override
   String toString() => 'PieceModel(r=$row,c=$col,${color.name},${isKing ? "King" : "Regular"})';
+
+  
+  
 }

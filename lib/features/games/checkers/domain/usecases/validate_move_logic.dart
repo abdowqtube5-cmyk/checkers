@@ -18,7 +18,7 @@ class ValidateMoveLogic {
     final piece = board.get(move.from.row, move.from.col);
     if (piece == null || piece.color != color) return false;
 
-    final validMoves = _calculator.forPiece(board, piece);
+    final validMoves = _calculator.forPiece(board, piece, color);
     return validMoves.any(
       (m) => m.from == move.from && m.to == move.to,
     );

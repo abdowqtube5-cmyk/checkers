@@ -9,7 +9,7 @@ import 'package:checkers/features/games/checkers/domain/entities/piece_model.dar
 
 class ApplyMoveFunction {
   /// تُطبّق [move] على [board] وتُعيد لوحة جديدة (بدون تعديل الأصل)
-  BoardState call(BoardState board, MoveModel move) {
+  BoardState call(BoardState board, MoveModel move, PieceColor playerColor) {
     final newGrid = cloneBoard(board.grid);
 
     final from = move.from;
@@ -17,6 +17,7 @@ class ApplyMoveFunction {
 
     // احصل على القطعة
     final piece = newGrid[from.row][from.col]!;
+    if (piece == null) return board;
 
     // احذف القطعة من موضعها
     newGrid[from.row][from.col] = null;
@@ -26,25 +27,22 @@ class ApplyMoveFunction {
       newGrid[cap.row][cap.col] = null;
     }
 
-    // هل يجب ترقية القطعة إلى ملك؟
-    final promoted = _shouldPromote(piece, to, board.size);
+    bool shouldBeKing = piece.isKing;
+    final int promotionRow = (piece.color == playerColor) ? 7 : 0;
 
-    // ضع القطعة في موضعها الجديد
-    newGrid[to.row][to.col] = PieceModel(
+    if (promotionRow == to.row) {
+      shouldBeKing = true;
+    }
+
+    // 5. وضع القطعة في المربع الجديد (مع تحديث حالتها كملك إذا لزم الأمر)
+    newGrid[to.row][to.col] = piece.copyWith(
       row: to.row,
       col: to.col,
-      color: piece.color,
-      isKing: promoted || piece.isKing,
+      isKing: shouldBeKing,
     );
 
     return BoardState(grid: newGrid, variant: board.variant, size: board.size);
   }
 
   /// تحقق من ترقية القطعة إلى ملك
-  bool _shouldPromote(PieceModel piece, Position to, int boardSize) {
-    if (piece.isKing) return false;
-    if (piece.color == PieceColor.white && to.row == boardSize - 1) return true;
-    if (piece.color == PieceColor.black && to.row == 0) return true;
-    return false;
-  }
 }

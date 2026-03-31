@@ -1,12 +1,4 @@
 // lib/features/games/checkers/domain/ai/minimax_engine.dart
-//
-// خوارزمية Minimax مع Alpha-Beta Pruning
-//
-// المبدأ (كما في المخطط):
-// - الـ AI لا يحرك القطع مباشرة، بل يُعيد "أفضل حركة" وجدها
-// - الـ Manager هو من يُرسلها للـ Flame لتحريك القطعة بصرياً
-// - الأسود = Maximizer (AI) — يريد تعظيم التقييم
-// - الأبيض = Minimizer (اللاعب) — يريد تصغير التقييم
 
 import 'dart:math';
 import 'package:checkers/core/constants/game_constants.dart';
@@ -22,7 +14,6 @@ class MinimaxEngine {
   final ApplyMoveFunction _applyMove;
   final EvaluatorLogic _evaluator;
   final _random = Random();
-  
 
   MinimaxEngine({
     CalculateAvailableMoves? moveCalc,
@@ -32,9 +23,11 @@ class MinimaxEngine {
         _applyMove = applyMove ?? ApplyMoveFunction(),
         _evaluator = evaluator ?? EvaluatorLogic();
 
-  /// يُعيد أفضل حركة للـ AI (الأسود) — لا يُحرّك القطع
-  MoveModel? getBestMove(BoardState board, PieceColor currentTurn) {
-    final moves = _moveCalc(board, PieceColor.black);
+  /// التعديل: نمرر لون الـ AI ولون اللاعب (الذي في الأسفل)
+  MoveModel? getBestMove(BoardState board, PieceColor aiColor, PieceColor playerColor) {
+    // حساب الحركات المتاحة للـ AI بناءً على موقعه في اللوحة
+    final moves = _moveCalc(board, aiColor, playerColor);
+    
     if (moves.isEmpty) return null;
     if (moves.length == 1) return moves.first;
 
@@ -42,19 +35,20 @@ class MinimaxEngine {
     var bestScore = -999999;
 
     for (final move in moves) {
-      final newBoard = _applyMove(board, move);
+      final newBoard = _applyMove(board, move, playerColor);
       final score = _minimax(
         newBoard,
         GameConstants.minimaxDepth - 1,
         -999999,
         999999,
-        false, // المرحلة التالية: دور الأبيض (minimizer)
+        false, // الدور القادم للاعب (Minimizer)
+        aiColor,
+        playerColor,
       );
-      if (score > bestScore ||
-          (score == bestScore && _random.nextBool())) {
+
+      if (score > bestScore || (score == bestScore && _random.nextBool())) {
         bestScore = score;
         best = move;
-        
       }
     }
 
@@ -67,20 +61,24 @@ class MinimaxEngine {
     int alpha,
     int beta,
     bool isMaximizing,
+    PieceColor aiColor,
+    PieceColor playerColor,
   ) {
-    final color = isMaximizing ? PieceColor.black : PieceColor.white;
-    final moves = _moveCalc(board, color);
+    // تحديد اللون الحالي بناءً على من هو الـ Maximizer
+    final currentColor = isMaximizing ? aiColor : playerColor;
+    final moves = _moveCalc(board, currentColor, playerColor);
 
     // حالة نهائية: لا حركات أو وصلنا للعمق الأقصى
     if (depth == 0 || moves.isEmpty) {
-      return _evaluator(board, PieceColor.aiColor);
+      // المقيم (Evaluator) يحتاج لمعرفة من هو اللاعب الذي في الأسفل لحساب "التقدم"
+      return _evaluator(board, aiColor);
     }
 
     if (isMaximizing) {
       var maxEval = -999999;
       for (final move in moves) {
-        final newBoard = _applyMove(board, move);
-        final eval = _minimax(newBoard, depth - 1, alpha, beta, false);
+        final newBoard = _applyMove(board, move, playerColor);
+        final eval = _minimax(newBoard, depth - 1, alpha, beta, false, aiColor, playerColor);
         if (eval > maxEval) maxEval = eval;
         if (eval > alpha) alpha = eval;
         if (beta <= alpha) break; // Alpha-Beta Pruning
@@ -89,8 +87,8 @@ class MinimaxEngine {
     } else {
       var minEval = 999999;
       for (final move in moves) {
-        final newBoard = _applyMove(board, move);
-        final eval = _minimax(newBoard, depth - 1, alpha, beta, true);
+        final newBoard = _applyMove(board, move, playerColor);
+        final eval = _minimax(newBoard, depth - 1, alpha, beta, true, aiColor, playerColor);
         if (eval < minEval) minEval = eval;
         if (eval < beta) beta = eval;
         if (beta <= alpha) break; // Alpha-Beta Pruning

@@ -19,7 +19,7 @@ import 'dart:ui' as ui;
 
 
 class PieceComponent extends PositionComponent {
-  final PieceModel model;
+  PieceModel model;
   final double tileSize;
 
   bool _dying = false;
@@ -163,6 +163,12 @@ class PieceComponent extends PositionComponent {
     canvas.drawPath(path, _crownPaint);
     canvas.drawPath(path, _crownStrokePaint);
   }
+  /// دالة لتحديث بيانات القطعة من الخارج
+  void updateModel(PieceModel newModel) {
+    this.model = newModel;
+    // لا حاجة لاستدعاء شيء هنا، Flame سيعيد الرسم في الفريم القادم
+    _initPaints();
+  }
 
   // ══════════════════════════
   // Public API
@@ -190,6 +196,16 @@ class PieceComponent extends PositionComponent {
     // لا حاجة لنموذج جديد هنا: نُغيّر فقط رسم التاج
     // (الـ CheckersGame يستبدل PieceComponent عند الترقية)
   }
+
+  // داخل PieceComponent
+void checkPromotion() {
+  // نتحقق من الموديل المرتبط بهذا الـ Component
+  if (model.isKing) {
+    // هنا تقوم بتغيير الـ Sprite الخاص بالقطعة لصورة الملك
+    // مثال إذا كنت تستخدم SpriteComponent:
+    // this.sprite = await gameRef.loadSprite('king_piece.png');
+  }
+}
 }
 
 typedef VoidCallback = void Function();

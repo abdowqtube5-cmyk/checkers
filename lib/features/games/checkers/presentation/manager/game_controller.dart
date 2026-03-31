@@ -113,7 +113,7 @@ void startGame(GameVariant variant, PieceColor playerColor) {
   // ══════════════════════════════
 
   void _selectPiece(int row, int col, PieceModel piece) {
-    final validMoves = _moveCalc.forPiece(state.board, piece);
+    final validMoves = _moveCalc.forPiece(state.board, piece, state.playerColor);
     stateRx.value = state.copyWith(
       selectedPiece: Position(row, col),
       validMoves: validMoves,
@@ -163,7 +163,7 @@ void _applyPlayerMove() {
     final lastMove = _lastAppliedMove;
     if (lastMove == null) return;
 
-    final newBoard = _applyMove(state.board, lastMove);
+    final newBoard = _applyMove(state.board, lastMove, state.playerColor);
     final captured = lastMove.captureCount;
 
     // المنطق الصحيح: إذا أكل اللاعب قطعاً، نزيد عداد اللون الذي "أُكل"
@@ -191,7 +191,8 @@ void _applyPlayerMove() {
     final lastMove = _lastAppliedMove;
     if (lastMove == null) return;
 
-    final newBoard = _applyMove(state.board, lastMove);
+    final newBoard = _applyMove(state.board, lastMove, state.playerColor
+    );
     final captured = lastMove.captureCount;
 
     // هنا الـ AI أكل قطع اللاعب
@@ -233,7 +234,7 @@ void _applyPlayerMove() {
       // إصلاح: تمرير لون AI كمعامل ثاني
       // ═══════════════════════════════════════════════════════
       final aiColor = state.currentTurn;
-      final bestMove = _minimax.getBestMove(board, aiColor);
+      final bestMove = _minimax.getBestMove(board, aiColor, state.playerColor);
       
       if (bestMove == null) {
         // لا حركات للـ AI → اللاعب فاز
@@ -292,7 +293,7 @@ void _applyPlayerMove() {
 
     // لا حركات للاعب الحالي → الطرف الآخر يفوز
     final nextColor = _opponent(state.currentTurn);
-    final moves = _moveCalc(board, nextColor);
+    final moves = _moveCalc(board, nextColor, state.playerColor);
     if (moves.isEmpty) {
       final result = nextColor == state.playerColor
           ? GameResult.aiWin

@@ -25,6 +25,10 @@ class CheckersGame extends FlameGame with TapCallbacks {
   final List<HintComponent> _hints = [];
 
   double get _tileSize => _coords.tileSize;
+  // بعد تنفيذ الحركة وتحديث الـ BoardState
+  
+
+  // ابحث عن الـ PieceComponent المقابل في Flame وحدثه
 
   // lib/features/games/checkers/presentation/flame/checkers_game.dart
 
@@ -97,6 +101,17 @@ Future<void> onLoad() async {
     add(comp);
     _pieceMap['${piece.row},${piece.col}'] = comp;
   }
+  // داخل كلاس CheckersGame
+void onMoveCompleted(PieceComponent movedComponent, PieceModel updatedModelFromDomain) {
+  
+  // هنا نستخدم السطر الذي "أضاعك"
+  // نحن نقول للـ Component الموجود على الشاشة: 
+  // "خذ هذه البيانات الجديدة (التي قد تحتوي على التاج) وحدث نفسك"
+  movedComponent.updateModel(updatedModelFromDomain);
+
+  // الآن، بما أن updatedModelFromDomain يحتوي على isKing = true
+  // فإن دالة render داخل PieceComponent سترسم التاج فوراً.
+}
 
   void _handleAnimateMove(MoveModel move, bool isAi) {
     final pieceComp = _pieceMap['${move.from.row},${move.from.col}'];
@@ -126,9 +141,20 @@ Future<void> onLoad() async {
     });
   }
 
-  void _finishAnimation(PieceComponent comp, MoveModel move) {
+void _finishAnimation(PieceComponent comp, MoveModel move) {
+    // 1. تحديث مكان القطعة في الخريطة البرمجية للـ Flame
     _pieceMap.remove('${move.from.row},${move.from.col}');
     _pieceMap['${move.to.row},${move.to.col}'] = comp;
+
+    // 2. الحصول على الحالة الجديدة للقطعة من الـ Controller 
+    // (هنا تكون قيمة isKing قد أصبحت true في الـ Domain)
+    final updatedModel = _controller.state.board.get(move.to.row, move.to.col);
+
+    if (updatedModel != null) {
+      // 3. تحديث الموديل داخل الكومبوننت لكي يرى أن isKing = true
+      comp.updateModel(updatedModel);
+    }
+
     _controller.animationCompleted();
   }
 
@@ -183,4 +209,18 @@ Future<void> onLoad() async {
     _controller.onAnimateMove = null; // تنظيف الذاكرة
     super.onRemove();
   }
+  void syncBoardState(BoardState newState) {
+  // نمر على كل قطع الـ Flame الموجودة في اللعبة
+  children.whereType<PieceComponent>().forEach((component) {
+    // جلب القطعة المقابلة من الـ Domain الجديد
+    final model = newState.get(component.model.row, component.model.col);
+    
+    if (model != null) {
+      // تحديث الموديل داخل الـ Component
+      component.model = model;
+      // استدعاء دالة التحديث البصري
+      component.checkPromotion();
+    }
+  });
+}
 }

@@ -1,18 +1,8 @@
 // lib/features/games/checkers/domain/entities/board_state.dart
 
-
-
 import 'package:checkers/core/constants/game_constants.dart';
 import 'package:checkers/features/games/checkers/domain/entities/piece_model.dart';
 
-/// حالة اللوحة — تمثيل منطقي للرقعة
-///
-/// المصفوفة [grid[row][col]]:
-///   - null = مربع فارغ
-///   - PieceModel = يوجد قطعة
-///
-/// row=0 → أسفل اللوحة (مكان بداية الأبيض)
-/// row=7 → أعلى اللوحة (مكان بداية الأسود)
 class BoardState {
   final List<List<PieceModel?>> grid;
   final GameVariant variant;
@@ -44,7 +34,6 @@ class BoardState {
   List<List<PieceModel?>> _copyGrid() =>
       grid.map((row) => List<PieceModel?>.from(row)).toList();
 
-  /// جميع القطع لـ [color]
   List<PieceModel> piecesOf(PieceColor color) {
     final result = <PieceModel>[];
     for (var r = 0; r < size; r++) {
@@ -56,52 +45,62 @@ class BoardState {
     return result;
   }
 
-  /// إنشاء لوحة ابتدائية حسب المتغير
-  factory BoardState.initial(GameVariant variant) {
+  // ═══════════════════════════════════════════════════════
+  // التعديل: تمرير لون اللاعب (playerColor) لتحديد أماكن الرص
+  // ═══════════════════════════════════════════════════════
+  factory BoardState.initial(GameVariant variant, PieceColor playerColor) {
     final grid = List.generate(
       GameConstants.boardSize,
       (_) => List<PieceModel?>.filled(GameConstants.boardSize, null),
     );
-    _placePieces(grid, variant);
+    _placePieces(grid, variant, playerColor);
     return BoardState(grid: grid, variant: variant);
   }
 
-  static void _placePieces(List<List<PieceModel?>> grid, GameVariant variant) {
+  static void _placePieces(List<List<PieceModel?>> grid, GameVariant variant, PieceColor playerColor) {
     if (variant == GameVariant.german) {
-      _placeGerman(grid);
+      _placeGerman(grid, playerColor);
     } else {
-      _placeTurkish(grid);
+      _placeTurkish(grid, playerColor);
     }
   }
 
-  /// الطريقة الألمانية (العالمية):
-  /// القطع تتوزع على المربعات الداكنة (row+col)%2==1
-  /// أبيض: صفوف 0,1,2 — أسود: صفوف 5,6,7
-  static void _placeGerman(List<List<PieceModel?>> grid) {
+  // ═══════════════════════════════════════════════════════
+  // التعديل: اللاعب في الأسفل (الصفوف 0,1,2) والخصم في الأعلى (الصفوف 5,6,7)
+  // ═══════════════════════════════════════════════════════
+  static void _placeGerman(List<List<PieceModel?>> grid, PieceColor playerColor) {
+    final aiColor = (playerColor == PieceColor.white) ? PieceColor.black : PieceColor.white;
+    
     for (var c = 0; c < 8; c++) {
+      // رص قطع اللاعب في الأسفل
       for (var r = 0; r <= 2; r++) {
         if ((r + c) % 2 == 1) {
-          grid[r][c] = PieceModel(row: r, col: c, color: PieceColor.white);
+          grid[r][c] = PieceModel(row: r, col: c, color: playerColor);
         }
       }
+      // رص قطع الكمبيوتر في الأعلى
       for (var r = 5; r <= 7; r++) {
         if ((r + c) % 2 == 1) {
-          grid[r][c] = PieceModel(row: r, col: c, color: PieceColor.black);
+          grid[r][c] = PieceModel(row: r, col: c, color: aiColor);
         }
       }
     }
   }
 
-  /// الطريقة التركية:
-  /// القطع متراصة جنباً لجنب مع ترك العمود الأول (col=0) فارغاً
-  /// أبيض: صفوف 1,2 (col=1..7) — أسود: صفوف 5,6 (col=1..7)
-  static void _placeTurkish(List<List<PieceModel?>> grid) {
+  // ═══════════════════════════════════════════════════════
+  // التعديل: اللاعب في الأسفل (الصفوف 1,2) والخصم في الأعلى (الصفوف 5,6)
+  // ═══════════════════════════════════════════════════════
+  static void _placeTurkish(List<List<PieceModel?>> grid, PieceColor playerColor) {
+    final aiColor = (playerColor == PieceColor.white) ? PieceColor.black : PieceColor.white;
+    
     for (var c = 0; c < 8; c++) {
+      // رص قطع اللاعب في الأسفل
       for (var r = 1; r <= 2; r++) {
-        grid[r][c] = PieceModel(row: r, col: c, color: PieceColor.white);
+        grid[r][c] = PieceModel(row: r, col: c, color: playerColor);
       }
+      // رص قطع الكمبيوتر في الأعلى
       for (var r = 5; r <= 6; r++) {
-        grid[r][c] = PieceModel(row: r, col: c, color: PieceColor.black);
+        grid[r][c] = PieceModel(row: r, col: c, color: aiColor);
       }
     }
   }

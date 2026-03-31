@@ -84,7 +84,7 @@ class GameState {
   // factory GameState.initial - المُنشئ الأولي
   // ═══════════════════════════════════════════════════════
   factory GameState.initial(GameVariant variant, PieceColor playerColor) {
-    final board = BoardState.initial(variant);
+    final board = BoardState.initial(variant, playerColor);
     
     // ═══════════════════════════════════════════════════════
     // الإصلاح: تحديد من يبدأ بناءً على قواعد المتغير

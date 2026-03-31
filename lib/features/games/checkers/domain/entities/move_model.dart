@@ -28,7 +28,7 @@ class MoveModel {
 
   const MoveModel({
     required this.path,
-    this.captured = const [],
+    this.captured = const [], required List<Position> capturedPieces, required Position to, required Position from,
   });
 
   Position get from => path.first;
